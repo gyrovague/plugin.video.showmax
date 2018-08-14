@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <setting id="_fresh" type="bool" visible="false" default="true" />
+
+    <setting label="31007" type="bool" id="use_cache" default="true"/>
+
+    <setting type="sep"/>
+    <setting label="31008" type="action" action="RunPlugin(plugin://$ID/?_=_reset)"/>
+</settings>

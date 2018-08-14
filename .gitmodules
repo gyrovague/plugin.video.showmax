@@ -1,0 +1,3 @@
+[submodule "resources/lib/matthuisman"]
+	path = resources/lib/matthuisman
+	url = https://github.com/matthuisman/kodi.common

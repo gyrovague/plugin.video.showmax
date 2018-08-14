@@ -1,0 +1,110 @@
+# KODI Media Center language file
+# Addon Name: SKY GO
+# Addon id: plugin.video.skygo.nz
+# Addon Provider: Matt Huisman
+msgid ""
+msgstr ""
+"Project-Id-Version:\n"
+"Report-Msgid-Bugs-To:\n"
+"POT-Creation-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator:\n"
+"Language-Team:\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+### common ###
+
+msgctxt "#32000"
+msgid "You need to login to access this content"
+msgstr ""
+
+msgctxt "#32001"
+msgid "No default route found"
+msgstr ""
+
+msgctxt "#32002"
+msgid "Are you sure you want to reset this plugins data?"
+msgstr ""
+
+msgctxt "#32003"
+msgid "Reset OK"
+msgstr ""
+
+msgctxt "#32004"
+msgid "Removed {delete_count} Cached Item"
+msgstr ""
+
+msgctxt "#32005"
+msgid "Clear Cache"
+msgstr ""
+
+msgctxt "#32006"
+msgid "Could not find a function for url: {raw_url} => {parsed_url}"
+msgstr ""
+
+msgctxt "#32007"
+msgid "Could not find a url for function: {function_name}"
+msgstr ""
+
+### settings.xml ###
+msgctxt "#31007"
+msgid "Use Cache"
+msgstr ""
+
+msgctxt "#31008"
+msgid "Reset Data"
+msgstr ""
+
+### plugin.py ###
+
+msgctxt "#30000"
+msgid "[B]Login[/B]"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Hide Channel"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Logout"
+msgstr ""
+
+msgctxt "#30003"
+msgid "Settings"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Sky Go Email"
+msgstr ""
+
+msgctxt "#30005"
+msgid "Sky Go Password"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Failed to login with below error:\n"
+"{error_msg}"
+msgstr ""
+
+msgctxt "#30007"
+msgid "Are you sure you want to logout?"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Unable to find that channel"
+msgstr ""
+
+msgctxt "#30009"
+msgid "Unable to get the stream for this channel.\n"
+"Possibly your subscription does not include this channel.\n"
+"Would you like to hide it?"
+msgstr ""
+
+msgctxt "#30010"
+msgid "This stream is protected by Adobe Access DRM and can not be played in KODI.\n"
+"Would you like to hide it?"
+msgstr ""
