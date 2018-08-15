@@ -156,3 +156,15 @@ msgstr ""
 msgctxt "#30012"
 msgid "Episode {episode_number}"
 msgstr ""
+
+msgctxt "#30013"
+msgid "Search"
+msgstr ""
+
+msgctxt "#30014"
+msgid "Search: {query}"
+msgstr ""
+
+msgctxt "#30015"
+msgid "No Results"
+msgstr ""

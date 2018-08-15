@@ -16,6 +16,9 @@ L_MOVIES           = 30009
 L_KIDS             = 30010
 L_SEASON_NUMBER    = 30011
 L_EPISODE_NUMBER   = 30012
+L_SEARCH           = 30013
+L_SEARCH_FOR       = 30014
+L_NO_RESULTS       = 30015
 
 api = API()
 
@@ -29,14 +32,15 @@ def before_dispatch():
 def home():
     folder = plugin.Folder(cacheToDisc=False)
 
-    if not api.logged_in:
+    if not plugin.logged_in:
         folder.add_item(label=_(L_LOGIN, bold=True), path=plugin.url_for(login))
 
-    folder.add_item(label=_(L_SHOWS, bold=True), path=plugin.url_for(shows), cache_key=cache.key_for(shows))
-    folder.add_item(label=_(L_MOVIES, bold=True), path=plugin.url_for(movies), cache_key=cache.key_for(movies))
-    folder.add_item(label=_(L_KIDS, bold=True), path=plugin.url_for(kids), cache_key=cache.key_for(kids))
+    folder.add_item(label=_(L_SHOWS,  bold=plugin.logged_in), path=plugin.url_for(shows),  cache_key=cache.key_for(shows))
+    folder.add_item(label=_(L_MOVIES, bold=plugin.logged_in), path=plugin.url_for(movies), cache_key=cache.key_for(movies))
+    folder.add_item(label=_(L_KIDS,   bold=plugin.logged_in), path=plugin.url_for(kids),   cache_key=cache.key_for(kids))
+    folder.add_item(label=_(L_SEARCH, bold=plugin.logged_in), path=plugin.url_for(search), cache_key=cache.key_for(search))
 
-    if api.logged_in:
+    if plugin.logged_in:
         folder.add_item(label=_(L_LOGOUT), path=plugin.url_for(logout))
 
     folder.add_item(label=_(L_SETTINGS), path=plugin.url_for(plugin.ROUTE_SETTINGS))
@@ -66,6 +70,30 @@ def kids():
     rows = api.kids()
     folder.add_items(_parse_rows(rows))
     return folder
+
+@plugin.route()
+def search():
+    query = gui.input(_(L_SEARCH), default=userdata.get('search', '')).strip()
+    if not query:
+        return
+
+    userdata.set('search', query)
+
+    @cache.cached(LIST_EXPIRY)
+    def get_results(query):
+        folder = plugin.Folder(title=_(L_SEARCH_FOR, query=query))
+        rows = api.search(query)
+        folder.add_items(_parse_rows(rows))
+
+        if not folder.items:
+            folder.add_item(
+                label     = _(L_NO_RESULTS, label=True),
+                is_folder = False,
+            )
+
+        return folder
+
+    return get_results(query)
 
 @plugin.route()
 @cache.cached(EPISODE_EXPIRY)

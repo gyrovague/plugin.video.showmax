@@ -62,15 +62,10 @@ class API(object):
         userdata.set('user_id', data['user_id'])
 
     def catalogue(self, _params):
-        start = 0
-        num   = 60
-        items = []
-
-        while True:
+        def process_page(start):
             params = {
                 'field[]': ['id', 'images', 'title', 'items', 'total', 'type', 'description', 'videos'],
                 'lang': 'eng',
-                'num': num,
                 'showmax_rating': 'adults',
                 'sort': 'alphabet',
                 'start': start,
@@ -80,13 +75,16 @@ class API(object):
             params.update(_params)
 
             data = self._session.get('catalogue/assets', params=params).json()
-            items.extend(data['items'])
-            if data['count'] < num or data['remaining'] == 0:
-                break
+            items = data['items']
 
-            start += num
+            count     = int(data.get('count', 0))
+            remaining = int(data.get('remaining', 0))
+            if count > 0 and remaining > 0:
+                items.extend(process_page(start + count))
 
-        return items
+            return items
+
+        return process_page(start=0)
 
     def shows(self):
         return self.catalogue({
@@ -114,6 +112,11 @@ class API(object):
         }
 
         return self._session.get('catalogue/tv_series/{}'.format(show_id), params=params).json()
+
+    def search(self, query):
+        return self.catalogue({
+            'q': query,
+        })
 
     def logout(self):
         log('API: Logout')
