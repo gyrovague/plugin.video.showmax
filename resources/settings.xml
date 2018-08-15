@@ -5,5 +5,6 @@
     <setting label="31007" type="bool" id="use_cache" default="true"/>
 
     <setting type="sep"/>
+    <setting label="31009" type="action" option="close" id="open_ia_settings" action="RunPlugin(plugin://$ID/?_=_ia_settings)"/>
     <setting label="31008" type="action" action="RunPlugin(plugin://$ID/?_=_reset)"/>
 </settings>

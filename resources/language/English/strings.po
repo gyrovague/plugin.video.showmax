@@ -16,7 +16,7 @@ msgstr ""
 "Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-### common ###
+### {COMMON} ###
 
 msgctxt "#32000"
 msgid "You need to login to access this content"
@@ -50,7 +50,50 @@ msgctxt "#32007"
 msgid "Could not find a url for function: {function_name}"
 msgstr ""
 
-### settings.xml ###
+msgctxt "#32008"
+msgid "Inpustream Adaptive add-on required for Widevine playback\n"
+"Use the Kodi installer from the Kodi website instead"
+msgstr ""
+
+msgctxt "#32009"
+msgid "Kodi Windows Store (UWP) version does not support Widevine DRM playback.\n"
+"Use the Kodi installer for Windows from the Kodi website instead."
+msgstr ""
+
+msgctxt "#32010"
+msgid "Kodi 18 or higher required for Widevine DRM playback on {system}"
+msgstr ""
+
+msgctxt "#32011"
+msgid "ARM 64bit does not support Widevine DRM playback\n"
+"An OS with a 32-bit userspace is required.\n"
+"Try coreelec.org"
+msgstr ""
+
+msgctxt "#32012"
+msgid "This system ({system}{arch} Kodi v{kodi_version}) does not yet support Widevine Playback"
+msgstr ""
+
+msgctxt "#32013"
+msgid "Kodi 17 or higher required for Widevine DRM playback."
+msgstr ""
+
+msgctxt "#32014"
+msgid "Downloading required file\n"
+"{url}"
+msgstr ""
+
+msgctxt "#32015"
+msgid "Widevine DRM"
+msgstr ""
+
+msgctxt "#32016"
+msgid "There was an unexpected error installing Widevine\n"
+"Please restart KODI and try again"
+msgstr ""
+
+### {SETTINGS} ###
+
 msgctxt "#31007"
 msgid "Use Cache"
 msgstr ""
@@ -59,14 +102,14 @@ msgctxt "#31008"
 msgid "Reset Data"
 msgstr ""
 
-### plugin.py ###
-
-msgctxt "#30000"
-msgid "[B]Login[/B]"
+msgctxt "#31009"
+msgid "Inputstream Settings"
 msgstr ""
 
-msgctxt "#30001"
-msgid "Hide Channel"
+### {PLUGIN} ###
+
+msgctxt "#30000"
+msgid "Login"
 msgstr ""
 
 msgctxt "#30002"
@@ -78,16 +121,16 @@ msgid "Settings"
 msgstr ""
 
 msgctxt "#30004"
-msgid "Sky Go Email"
+msgid "Showmax Email"
 msgstr ""
 
 msgctxt "#30005"
-msgid "Sky Go Password"
+msgid "Showmax Password"
 msgstr ""
 
 msgctxt "#30006"
-msgid "Failed to login with below error:\n"
-"{error_msg}"
+msgid "Failed to login\n"
+"Check your details and try again"
 msgstr ""
 
 msgctxt "#30007"
@@ -95,16 +138,21 @@ msgid "Are you sure you want to logout?"
 msgstr ""
 
 msgctxt "#30008"
-msgid "Unable to find that channel"
+msgid "Shows"
 msgstr ""
 
 msgctxt "#30009"
-msgid "Unable to get the stream for this channel.\n"
-"Possibly your subscription does not include this channel.\n"
-"Would you like to hide it?"
+msgid "Movies"
 msgstr ""
 
 msgctxt "#30010"
-msgid "This stream is protected by Adobe Access DRM and can not be played in KODI.\n"
-"Would you like to hide it?"
+msgid "Kids"
+msgstr ""
+
+msgctxt "#30011"
+msgid "Season {season_number}"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Episode {episode_number}"
 msgstr ""

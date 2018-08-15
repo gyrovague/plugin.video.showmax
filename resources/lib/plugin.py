@@ -1,26 +1,21 @@
-import re
-
-from matthuisman import plugin, gui, cache, settings, userdata
+from matthuisman import plugin, gui, cache, settings, userdata, inputstream
 from matthuisman.util import get_string as _
 
 from .api import API
+from .constants import LIST_EXPIRY, EPISODE_EXPIRY, THUMB_HEIGHT, FANART_HEIGHT
 
 L_LOGIN            = 30000
-L_HIDE_CHANNEL     = 30001
 L_LOGOUT           = 30002
 L_SETTINGS         = 30003
 L_ASK_USERNAME     = 30004
 L_ASK_PASSWORD     = 30005
 L_LOGIN_ERROR      = 30006
 L_LOGOUT_YES_NO    = 30007
-L_NO_CHANNEL       = 30008
-L_NO_STREAM        = 30009
-L_ADOBE_ERROR      = 30010
-
-def sorted_nicely(l):
-    convert = lambda text: int(text) if text.isdigit() else text
-    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key['title'])]
-    return sorted(l, key = alphanum_key)
+L_SHOWS            = 30008
+L_MOVIES           = 30009
+L_KIDS             = 30010
+L_SEASON_NUMBER    = 30011
+L_EPISODE_NUMBER   = 30012
 
 api = API()
 
@@ -32,31 +27,64 @@ def before_dispatch():
 
 @plugin.route('')
 def home():
-    folder = plugin.Folder()
+    folder = plugin.Folder(cacheToDisc=False)
 
     if not api.logged_in:
-        folder.add_item(label=_(L_LOGIN), path=plugin.url_for(login))
+        folder.add_item(label=_(L_LOGIN, bold=True), path=plugin.url_for(login))
 
-    hidden = userdata.get('hidden', [])
-
-    channels = sorted_nicely(api.channels().values())
-    for channel in channels:
-        if channel['title'] in hidden:
-            continue
-
-        folder.add_item(
-            label = channel['title'],
-            art   = {'thumb': channel['image']},
-            path  = plugin.url_for(play, is_live=True, channel=channel['title']),
-            info  = {'description': channel['description']},
-            playable = True,
-            context = ((_(L_HIDE_CHANNEL), 'XBMC.RunPlugin({})'.format(plugin.url_for(hide_channel, channel=channel['title']))),),
-        )
+    folder.add_item(label=_(L_SHOWS, bold=True), path=plugin.url_for(shows), cache_key=cache.key_for(shows))
+    folder.add_item(label=_(L_MOVIES, bold=True), path=plugin.url_for(movies), cache_key=cache.key_for(movies))
+    folder.add_item(label=_(L_KIDS, bold=True), path=plugin.url_for(kids), cache_key=cache.key_for(kids))
 
     if api.logged_in:
         folder.add_item(label=_(L_LOGOUT), path=plugin.url_for(logout))
 
     folder.add_item(label=_(L_SETTINGS), path=plugin.url_for(plugin.ROUTE_SETTINGS))
+
+    return folder
+
+@plugin.route()
+@cache.cached(LIST_EXPIRY)
+def shows():
+    folder = plugin.Folder(title=_(L_SHOWS))
+    rows = api.shows()
+    folder.add_items(_parse_rows(rows))
+    return folder
+
+@plugin.route()
+@cache.cached(LIST_EXPIRY)
+def movies():
+    folder = plugin.Folder(title=_(L_MOVIES))
+    rows = api.movies()
+    folder.add_items(_parse_rows(rows))
+    return folder
+
+@plugin.route()
+@cache.cached(LIST_EXPIRY)
+def kids():
+    folder = plugin.Folder(title=_(L_KIDS))
+    rows = api.kids()
+    folder.add_items(_parse_rows(rows))
+    return folder
+
+@plugin.route()
+@cache.cached(EPISODE_EXPIRY)
+def show(show_id):
+    folder = plugin.Folder()
+
+    data   = api.show(show_id)
+    art    = _get_art(data['images'])
+    folder.title = data['title']
+
+    for season in data['seasons']:
+        folder.add_item(
+            label = _(L_SEASON_NUMBER, label=True, season_number=season['number']),
+            art   = art,
+            is_folder = False,
+        )
+
+        rows = season['episodes']
+        folder.add_items(_parse_rows(rows, art))
 
     return folder
 
@@ -77,8 +105,8 @@ def login():
 
         try:
             api.login(username=username, password=password)
-        except Exception as e:
-            gui.ok(_(L_LOGIN_ERROR, error_msg=e))
+        except Exception:
+            gui.ok(_(L_LOGIN_ERROR))
 
     cache.delete('password')
 
@@ -90,39 +118,75 @@ def logout():
     api.logout()
 
 @plugin.route()
-def hide_channel(channel):
-    hidden = userdata.get('hidden', [])
-
-    if channel not in hidden:
-        hidden.append(channel)
-
-    userdata.set('hidden', hidden)
-    gui.refresh()
-
-@plugin.route()
 @plugin.login_required()
-def play(channel):
-    use_ia_hls  = settings.getBool('use_ia_hls')
+def play(video_id):
+    url, license_url = api.play(video_id)
+    return plugin.PlayerItem(inputstream=inputstream.Widevine(license_url), path=url)
 
-    channels = api.channels()
-    channel = channels.get(channel)
-    if not channel:
-        raise plugin.Error(_(L_NO_CHANNEL))
+def _parse_rows(rows, default_art=None):
+    items = []
 
-    url = api.play_url(channel['url'])
-
-    if not url:
-        if gui.yes_no(_(L_NO_STREAM)):
-            hide_channel(channel['title'])
-
-    elif 'faxs' in url:
-        if gui.yes_no(_(L_ADOBE_ERROR)):
-            hide_channel(channel['title'])
-            
-    else:
-        return plugin.PlayerItem(
-            label = channel['title'],
-            art   = {'thumb': channel['image']},
-            info  = {'description': channel['description']},
-            path  = url,
+    for row in rows:
+        item = plugin.Item(
+            label    = row['title'],
+            info     = {'plot': row['description']},
+            art      = _get_art(row.get('images', []), default_art),
         )
+
+        if row['type'] in ('movie', 'episode'):
+            videos = _get_videos(row.get('videos', []))
+
+            item.info.update({
+                'duration': int(videos['main']['duration']),
+                'mediatype': row['type'],
+            })
+
+            item.video = {'height': videos['main']['height'], 'width': videos['main']['width'], 'codec': 'h264'}
+            item.path  = plugin.url_for(play, video_id=videos['main']['id'])
+            item.playable = True
+
+            if 'trailer' in videos:
+                item.info['trailer'] = plugin.url_for(play, video_id=videos['trailer']['id'])
+
+            if not item.label:
+                item.label = _(L_EPISODE_NUMBER, episode_number=row['number'])
+
+        elif row['type'] == 'tv_series':
+            item.path      = plugin.url_for(show, show_id=row['id'])
+            item.cache_key = cache.key_for(show, show_id=row['id'])
+
+        items.append(item)
+
+    return items
+
+def _get_videos(videos):
+    vids = {}
+
+    for video in videos:
+        if video['usage'] == 'main':
+            vids['main'] = video
+        elif video['usage'] == 'trailer':
+            vids['trailer'] = video
+
+    return vids
+
+def _get_art(images, default_art=None):
+    art = {}
+    default_art = default_art or {}
+
+    for image in images:
+        if image['type'] == 'poster':
+            if image['orientation'] == 'square' or 'thumb' not in art:
+                art['thumb'] = image['link'] + '/x{}'.format(THUMB_HEIGHT)
+        elif image['type'] == 'background':
+            art['fanart'] = image['link'] + '/x{}'.format(FANART_HEIGHT)
+        elif image['type'] == 'hero' and 'fanart' not in art:
+            art['fanart'] = image['link'] + '/x{}'.format(FANART_HEIGHT)
+        elif image['type'] == 'poster' and image['orientation'] == 'portrait':
+            art['poster'] = image['link'] + '/x{}'.format(THUMB_HEIGHT)
+
+    for key in default_art:
+        if key not in art:
+            art[key] = default_art[key]
+
+    return art

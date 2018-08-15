@@ -1,12 +1,13 @@
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (CrKey armv7l 1.5.16041) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/31.0.1650.0 Safari/537.36 sky-android (ver=1.0)',
-    'sky-x-forwarded-for': 'test',
-    'x-api-key': '0VLwN2X1Nk99ao12C5byc7fn59iHxatD9SUQye69',
-    'X-Sky-API-Key': '375663d6df9ad11809c7bb9dd3e634f8',
+    'User-Agent': 'Mozilla/5.0 (PlayStation 0 5.55) AppleWebKit/537.73 (KHTML, like Gecko)',
+    'X-Requested-With': 'com.showmax.app',
 }
 
-CHANNELS_URL = 'https://feed.theplatform.com/f/7tMqSC/PDBWHrmbpxqw'
-AUTH_URL     = 'https://4azub3wqb8.execute-api.ap-southeast-2.amazonaws.com/prod/auth/skygo/token/v1/authenticate/'
-TOKEN_URL    = 'https://6cwj6qmdoa.execute-api.ap-southeast-2.amazonaws.com/prod/v1/token/mpx/'
+API_URL    = 'https://api.showmax.com/v97.3/android/{}'
+LOGIN_URL = 'https://secure.showmax.com/v97.3/android/signin'
 
-CHANNEL_EXPIRY = (60*60*24) #24 hours
+LIST_EXPIRY    = (60*60*24) #24hours
+EPISODE_EXPIRY = (60*60*24) #24hours
+
+THUMB_HEIGHT  = 500
+FANART_HEIGHT = 720

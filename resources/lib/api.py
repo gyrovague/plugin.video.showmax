@@ -1,11 +1,12 @@
 import hashlib
 
+from bs4 import BeautifulSoup
+
 from matthuisman import userdata
 from matthuisman.session import Session
 from matthuisman.log import log
-from matthuisman.cache import cached
 
-from .constants import HEADERS, AUTH_URL, CHANNELS_URL, TOKEN_URL, CHANNEL_EXPIRY
+from .constants import HEADERS, API_URL, LOGIN_URL
 
 class Error(Exception):
     pass
@@ -13,73 +14,140 @@ class Error(Exception):
 class API(object):
     def new_session(self):
         self.logged_in = False
-        self._session = Session(HEADERS)
+        self._session = Session(HEADERS, base_url=API_URL)
         self.set_access_token(userdata.get('access_token'))
 
     def set_access_token(self, token):
         if token:
-            self._session.headers.update({'sky-x-access-token': token})
+            self._session.headers.update({'Authorization': 'Bearer {0}'.format(token)})
             self.logged_in = True
-
-    @cached(expires=CHANNEL_EXPIRY, key='channels')
-    def channels(self):
-        channels = {}
-
-        data = self._session.get(CHANNELS_URL).json()
-        for row in data['entries']:
-            data = {'title': row['title'], 'description': row['description'], 'url': '', 'image': row['media$thumbnails'][0]['plfile$url']}
-            for item in row['media$content']:
-                if 'SkyGoStream' in item['plfile$assetTypes']:
-                    data['url'] = item['plfile$url']
-                    break
-
-            channels[row['title']] = data
-
-        return channels
-
-    def play_url(self, url):
-        params = {
-            'profileId':   userdata.get('device_id'),
-            'deviceId':    userdata.get('device_id'),
-            'partnerId':   'skygo',
-            'description': 'ANDROID',
-        }
-        
-        data = self._session.get(TOKEN_URL, params=params).json()
-        if not 'token' in data:
-            raise Error(data.get('message', ''))
-
-        token = data['token']
-        url = '{}&auth={}'.format(url, token)
-        resp = self._session.get(url, allow_redirects=False)
-        return resp.headers.get('location')
         
     def login(self, username, password):
         log('API: Login')
 
-        device_id = hashlib.md5(username).hexdigest()
-
         data = {
-            "deviceDetails": "test",
-            "deviceID": device_id,
-            "deviceIP": "192.168.1.1",
-            "password": password,
-            "username": username
+            'response_type': 'token',
+            'lang': 'eng'
         }
 
-        data = self._session.post(AUTH_URL, json=data).json()
-        access_token = data.get('sessiontoken')
+        resp = self._session.get(LOGIN_URL, params=data)
+        soup = BeautifulSoup(resp.text, 'html.parser')
+
+        form = soup.find('form', id='new_signin')
+        for e in form.find_all('input'):
+            data[e.attrs['name']] = e.attrs.get('value')
+
+        data.update({
+            'signin[email]': username,
+            'signin[password]': password,
+        })
+
+        resp = self._session.post(LOGIN_URL, data=data, allow_redirects=False)
+        access_token = resp.cookies.get('showmax_oauth')
         
         if not access_token:
             self.logout()
-            raise Error(data.get('message', ''))
+            raise Error()
+
+        self.set_access_token(access_token)
+
+        data = self._session.get('user/current', params={'lang':'eng'}).json()
+        if 'error_code' in data:
+            raise Error()
+
+        device_id = hashlib.sha1(username).hexdigest().upper()
 
         userdata.set('device_id', device_id)
         userdata.set('access_token', access_token)
-        self.set_access_token(access_token)
+        userdata.set('user_id', data['user_id'])
+
+    def catalogue(self, _params):
+        start = 0
+        num   = 60
+        items = []
+
+        while True:
+            params = {
+                'field[]': ['id', 'images', 'title', 'items', 'total', 'type', 'description', 'videos'],
+                'lang': 'eng',
+                'num': num,
+                'showmax_rating': 'adults',
+                'sort': 'alphabet',
+                'start': start,
+                'subscription_status': 'full'
+            }
+
+            params.update(_params)
+
+            data = self._session.get('catalogue/assets', params=params).json()
+            items.extend(data['items'])
+            if data['count'] < num or data['remaining'] == 0:
+                break
+
+            start += num
+
+        return items
+
+    def shows(self):
+        return self.catalogue({
+            'type': 'tv_series',
+            'exclude_section[]': ['kids'],
+        })
+
+    def show(self, show_id):
+        params = {
+            'field[]': ['id', 'images', 'title', 'items', 'total', 'type', 'description', 'videos', 'number', 'seasons', 'episodes'],
+         #   'expand_seasons': True,
+            'lang': 'eng',
+            'showmax_rating': 'adults',
+            'subscription_status': 'full'
+        }
+
+        return self._session.get('catalogue/tv_series/{}'.format(show_id), params=params).json()
+
+    def movies(self):
+        return self.catalogue({
+            'type': 'movie',
+            'exclude_section[]': ['kids'],
+        })
+
+    def kids(self):
+        return self.catalogue({
+            'section': 'kids',
+        })
 
     def logout(self):
         log('API: Logout')
         userdata.delete('device_id')
         userdata.delete('access_token')
+        userdata.delete('user_id')
         self.new_session()
+
+    def play(self, video_id):
+        params = {
+            'encoding': 'mpd_widevine_modular',
+            'subscription_status': 'full',
+            'lang': 'eng',
+        }
+
+        data = self._session.get('playback/play/{0}'.format(video_id), params=params).json()
+        
+        url        = data['url']
+        task_id    = data['packaging_task_id']
+        session_id = data['session_id']
+
+        data = {
+            'user_id': userdata.get('user_id'),
+            'video_id': video_id,
+            'hw_code': userdata.get('device_id'),
+            'packaging_task_id': task_id,
+            'session_id': session_id,
+        }
+
+        params = {'showmax_rating': 'adults', 'lang': 'eng'}
+        data = self._session.post('playback/verify', params=params, data=data).json()
+
+        license_request = data['license_request']
+        license_url = API_URL.format('drm/widevine_modular?license_request={0}'.format(license_request))
+
+        return url, license_url
