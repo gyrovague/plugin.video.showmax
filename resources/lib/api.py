@@ -94,17 +94,6 @@ class API(object):
             'exclude_section[]': ['kids'],
         })
 
-    def show(self, show_id):
-        params = {
-            'field[]': ['id', 'images', 'title', 'items', 'total', 'type', 'description', 'videos', 'number', 'seasons', 'episodes'],
-         #   'expand_seasons': True,
-            'lang': 'eng',
-            'showmax_rating': 'adults',
-            'subscription_status': 'full'
-        }
-
-        return self._session.get('catalogue/tv_series/{}'.format(show_id), params=params).json()
-
     def movies(self):
         return self.catalogue({
             'type': 'movie',
@@ -115,6 +104,16 @@ class API(object):
         return self.catalogue({
             'section': 'kids',
         })
+
+    def show(self, show_id):
+        params = {
+            'field[]': ['id', 'images', 'title', 'items', 'total', 'type', 'description', 'videos', 'number', 'seasons', 'episodes'],
+            'lang': 'eng',
+            'showmax_rating': 'adults',
+            'subscription_status': 'full'
+        }
+
+        return self._session.get('catalogue/tv_series/{}'.format(show_id), params=params).json()
 
     def logout(self):
         log('API: Logout')
